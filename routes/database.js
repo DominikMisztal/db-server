@@ -95,12 +95,12 @@ router.post("/teeth:id", async function (req, res, next) {
 });
 
 router.post("/upload_photo:id", async function (req, res, next) {
-  const visitId = req.id;
+  const visitId = req.params.id;
+  console.log(visitId);
   //get just data64 encoded data
   const trimmedData = req.body.data.replace(/^data:image\/\w+;base64,/, "");
   const photoData = Buffer.from(trimmedData, "base64");
   const filename = crypto.randomUUID() + ".jpg";
-  res.json({ message: "ok" });
   fs.writeFile(`public/${filename}`, photoData, async (err) => {
     if (err) {
       console.error("failed to save file to local filesystem");
@@ -108,12 +108,12 @@ router.post("/upload_photo:id", async function (req, res, next) {
       return;
     }
 
-    // try {
-    //   res.json(await database.createNewPhoto(visitId, filename));
-    // } catch (err) {
-    //   console.error(`Error while creating data`, err.message);
-    //   next(err);
-    // }
+    try {
+      res.json(await database.createNewPhoto(filename, visitId));
+    } catch (err) {
+      console.error(`Error while creating data`, err.message);
+      next(err);
+    }
   });
 });
 

@@ -182,6 +182,18 @@ async function createVisit(visit) {
   return { message };
 }
 
+async function createNewPhoto(filename, visitId) {
+  const result = await db.query(
+    `INSERT INTO photos (filename, visitID) VALUES ("${filename}", ${visitId})`
+  );
+
+  if (result.affectedRows) {
+    return { message: "photo created successfully" };
+  } else {
+    return { message: "shit broke" };
+  }
+}
+
 async function createNewTeethForPatientByID(ID, patient) {
   const result = await db.query(
     `INSERT INTO teeth 
@@ -275,6 +287,7 @@ module.exports = {
   getVisitsByDoctorID,
   createNewTeethForPatientByID,
   createPatient,
+  createNewPhoto,
   createVisit,
   updatePatient,
   updateTeeth,
