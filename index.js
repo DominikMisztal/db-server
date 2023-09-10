@@ -15,7 +15,8 @@ app.get("/", (req, res) => {
 });
 
 app.use("/database", databaseRouter);
-
+app.use(express.static("public"));
+app.use(express.bodyParser({ limit: "50mb" }));
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
