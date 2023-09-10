@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const database = require("../services/database");
-
+const fs = require("fs");
+const crypto = require("crypto");
 /* GET */
 router.get("/doctors", async function (req, res, next) {
   try {
@@ -91,6 +92,29 @@ router.post("/teeth:id", async function (req, res, next) {
     console.error(`Error while creating data`, err.message);
     next(err);
   }
+});
+
+router.post("/upload_photo:id", async function (req, res, next) {
+  const visitId = req.id;
+  //get just data64 encoded data
+  const trimmedData = req.body.data.replace(/^data:image\/\w+;base64,/, "");
+  const photoData = Buffer.from(trimmedData, "base64");
+  const filename = crypto.randomUUID() + ".jpg";
+  res.json({ message: "ok" });
+  fs.writeFile(`public/${filename}`, photoData, async (err) => {
+    if (err) {
+      console.error("failed to save file to local filesystem");
+      next(err);
+      return;
+    }
+
+    // try {
+    //   res.json(await database.createNewPhoto(visitId, filename));
+    // } catch (err) {
+    //   console.error(`Error while creating data`, err.message);
+    //   next(err);
+    // }
+  });
 });
 
 /* PUT */

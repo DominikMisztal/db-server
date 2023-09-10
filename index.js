@@ -2,8 +2,9 @@ const express = require("express");
 const app = express();
 const port = 3001;
 const databaseRouter = require("./routes/database");
+const bodyParser = require("body-parser");
 
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 app.use(
   express.urlencoded({
     extended: true,
@@ -16,7 +17,6 @@ app.get("/", (req, res) => {
 
 app.use("/database", databaseRouter);
 app.use(express.static("public"));
-app.use(express.bodyParser({ limit: "50mb" }));
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
