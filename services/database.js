@@ -6,9 +6,8 @@ const config = require("../config");
 async function getMultipleDoctors(page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
-    // `SELECT * 
-    // FROM doctors LIMIT ${offset},${config.listPerPage}`
-    `SELECT * from doctors order by ID desc LIMIT 1`
+    `SELECT * 
+    FROM doctors LIMIT ${offset},${config.listPerPage}`
   );
   console.log(rows[0].ID)
   const data = helper.emptyOrRows(rows);
