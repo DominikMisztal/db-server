@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const database = require("../services/database");
+
 const { activeSessions } = require("../services/sessions");
 
 //authorize requests
@@ -17,6 +18,9 @@ router.use((req, res, next) => {
     next({ statusCode: 403, message: "session expired" });
   }
 });
+
+const fs = require("fs");
+const crypto = require("crypto");
 
 /* GET */
 router.get("/doctors", async function (req, res, next) {
@@ -108,6 +112,30 @@ router.post("/teeth:id", async function (req, res, next) {
     next(err);
   }
 });
+
+
+router.post("/upload_photo:id", async function (req, res, next) {
+  const visitId = req.params.id;
+  //get just data64 encoded data
+  const trimmedData = req.body.data.replace(/^data:image\/\w+;base64,/, "");
+  const photoData = Buffer.from(trimmedData, "base64");
+  const filename = crypto.randomUUID() + ".jpg";
+  fs.writeFile(`public/${filename}`, photoData, async (err) => {
+    if (err) {
+      console.error("failed to save file to local filesystem");
+      next(err);
+      return;
+    }
+
+    try {
+      res.json(await database.createNewPhoto(filename, visitId));
+    } catch (err) {
+      console.error(`Error while creating data`, err.message);
+      next(err);
+    }
+  });
+});
+
 
 /* PUT */
 router.put("/patient:id", async function (req, res, next) {

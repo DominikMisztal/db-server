@@ -89,7 +89,7 @@ async function getTeethByID(ID, page = 1) {
   };
 }
 
-async function getPhotosByID(ID, page = 1) {
+async function getPhotosByVisitID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
@@ -190,6 +190,18 @@ async function createVisit(visit) {
   return { message };
 }
 
+async function createNewPhoto(filename, visitId) {
+  const result = await db.query(
+    `INSERT INTO photos (filename, visitID) VALUES ("${filename}", ${visitId})`
+  );
+
+  if (result.affectedRows) {
+    return { message: "photo created successfully" };
+  } else {
+    return { message: "shit broke" };
+  }
+}
+
 async function createNewTeethForPatientByID(ID, patient) {
   const result = await db.query(
     `INSERT INTO teeth 
@@ -236,7 +248,7 @@ async function updatePatient(id, patient) {
 
 async function updateTeeth(id, teeth) {
   const result = await db.query(
-    `UPDATE teeth 
+    `UPDATE teeth
     SET t1="${teeth.t1}", t2="${teeth.t2}", t3="${teeth.t3}", 
     t4="${teeth.t4}", t5="${teeth.t5}", t6="${teeth.t6}", 
     t7="${teeth.t7}", t8="${teeth.t8}", t9="${teeth.t9}", 
@@ -279,11 +291,12 @@ module.exports = {
   getMultiplePatientsByID,
   getMultiplePatientsByDoctorID,
   getTeethByID,
-  getPhotosByID,
+  getPhotosByID: getPhotosByVisitID,
   getVisits,
   getVisitsByDoctorID,
   createNewTeethForPatientByID,
   createPatient,
+  createNewPhoto,
   createVisit,
   updatePatient,
   updateTeeth,
