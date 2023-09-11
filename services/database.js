@@ -2,14 +2,13 @@ const db = require("./db");
 const helper = require("../helper");
 const config = require("../config");
 
-
 async function getMultipleDoctors(page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT * 
     FROM doctors LIMIT ${offset},${config.listPerPage}`
   );
-  console.log(rows[0].ID)
+  console.log(rows[0].ID);
   const data = helper.emptyOrRows(rows);
   const meta = { page };
 
@@ -38,7 +37,9 @@ async function getMultiplePatientsByID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
-    FROM patients WHERE ID = ${ID.substring(1)} LIMIT ${offset},${config.listPerPage}`
+    FROM patients WHERE ID = ${ID.substring(1)} LIMIT ${offset},${
+      config.listPerPage
+    }`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
@@ -53,7 +54,9 @@ async function getMultiplePatientsByDoctorID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
-    FROM patients WHERE doctor = ${ID.substring(1)} LIMIT ${offset},${config.listPerPage}`
+    FROM patients WHERE doctor = ${ID.substring(1)} LIMIT ${offset},${
+      config.listPerPage
+    }`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
@@ -78,12 +81,14 @@ async function getTeethByID(ID, page = 1) {
   };
 }
 
-async function getPhotosByID(ID, page = 1) {
+async function getPhotosByVisitID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
-  const rows = await db.query(
-    `SELECT *
-    FROM photos WHERE ID = ${ID.substring(1)} LIMIT ${offset},${config.listPerPage}`
-  );
+  const query = `SELECT *
+    FROM photos WHERE visitID = ${ID.substring(0, 1)} 
+    LIMIT ${offset},${config.listPerPage}`;
+
+  console.log(query);
+  const rows = await db.query(query);
   const data = helper.emptyOrRows(rows);
   const meta = { page };
 
@@ -112,7 +117,9 @@ async function getVisitsByDoctorID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
-    FROM visits WHERE doctor = ${ID.substring(1)} LIMIT ${offset},${config.listPerPage}`
+    FROM visits WHERE doctor = ${ID.substring(1)} LIMIT ${offset},${
+      config.listPerPage
+    }`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
@@ -122,11 +129,6 @@ async function getVisitsByDoctorID(ID, page = 1) {
     meta,
   };
 }
-
-
-
-
-
 
 async function createPatient(patient) {
   const result = await db.query(
@@ -141,11 +143,9 @@ async function createPatient(patient) {
   if (result.affectedRows) {
     message = "patient created successfully";
   }
-  let row = await db.query(
-    `SELECT * from patients order by ID desc LIMIT 1`
-  );
+  let row = await db.query(`SELECT * from patients order by ID desc LIMIT 1`);
 
-  let patient_id = row[0].ID
+  let patient_id = row[0].ID;
   await db.query(
     `INSERT INTO teeth 
     (patient) 
@@ -153,11 +153,9 @@ async function createPatient(patient) {
     ("${patient_id}")`
   );
 
-  row = await db.query(
-    `SELECT * from teeth order by ID desc LIMIT 1`
-  );
+  row = await db.query(`SELECT * from teeth order by ID desc LIMIT 1`);
 
-  teeth_id = row[0].ID
+  teeth_id = row[0].ID;
   await db.query(
     `UPDATE patients
     SET teeth = ${teeth_id}
@@ -184,6 +182,18 @@ async function createVisit(visit) {
   return { message };
 }
 
+async function createNewPhoto(filename, visitId) {
+  const result = await db.query(
+    `INSERT INTO photos (filename, visitID) VALUES ("${filename}", ${visitId})`
+  );
+
+  if (result.affectedRows) {
+    return { message: "photo created successfully" };
+  } else {
+    return { message: "shit broke" };
+  }
+}
+
 async function createNewTeethForPatientByID(ID, patient) {
   const result = await db.query(
     `INSERT INTO teeth 
@@ -192,11 +202,9 @@ async function createNewTeethForPatientByID(ID, patient) {
     ("${patient.ID}")`
   );
 
-  row = await db.query(
-    `SELECT * from teeth order by ID desc LIMIT 1`
-  );
+  row = await db.query(`SELECT * from teeth order by ID desc LIMIT 1`);
 
-  teeth_id = row[0].ID
+  teeth_id = row[0].ID;
   await db.query(
     `UPDATE patients
     SET teeth = ${teeth_id}
@@ -211,7 +219,6 @@ async function createNewTeethForPatientByID(ID, patient) {
 
   return { message };
 }
-
 
 async function updatePatient(id, patient) {
   const result = await db.query(
@@ -233,7 +240,7 @@ async function updatePatient(id, patient) {
 
 async function updateTeeth(id, teeth) {
   const result = await db.query(
-    `UPDATE teeth 
+    `UPDATE teeth
     SET t1="${teeth.t1}", t2="${teeth.t2}", t3="${teeth.t3}", 
     t4="${teeth.t4}", t5="${teeth.t5}", t6="${teeth.t6}", 
     t7="${teeth.t7}", t8="${teeth.t8}", t9="${teeth.t9}", 
@@ -257,13 +264,8 @@ async function updateTeeth(id, teeth) {
   return { message };
 }
 
-
-
-
 async function remove(id) {
-  const result = await db.query(
-    `DELETE FROM * WHERE id=${id}`
-  );
+  const result = await db.query(`DELETE FROM * WHERE id=${id}`);
 
   let message = "Error in deleting data";
 
@@ -280,14 +282,14 @@ module.exports = {
   getMultiplePatientsByID,
   getMultiplePatientsByDoctorID,
   getTeethByID,
-  getPhotosByID,
+  getPhotosByID: getPhotosByVisitID,
   getVisits,
   getVisitsByDoctorID,
   createNewTeethForPatientByID,
   createPatient,
+  createNewPhoto,
   createVisit,
   updatePatient,
   updateTeeth,
-  update,
   remove,
 };
