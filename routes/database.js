@@ -1,6 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const database = require("../services/database");
+const { activeSessions } = require("../services/sessions");
+
+//authorize requests
+router.use((req, res, next) => {
+  const { sessionId } = req.cookies;
+  if (!sessionId) {
+    next({ statusCode: 403, message: "user not logged in" });
+    return;
+  }
+
+  if (activeSessions.has(sessionId)) {
+    next();
+  } else {
+    next({ statusCode: 403, message: "session expired" });
+  }
+});
 
 /* GET */
 router.get("/doctors", async function (req, res, next) {
@@ -23,7 +39,9 @@ router.get("/patients", async function (req, res, next) {
 
 router.get("/patients:id", async function (req, res, next) {
   try {
-    res.json(await database.getMultiplePatientsByID(req.params.id ,req.query.page));
+    res.json(
+      await database.getMultiplePatientsByID(req.params.id, req.query.page)
+    );
   } catch (err) {
     console.error(`Error while getting data `, err.message);
     next(err);
@@ -31,7 +49,12 @@ router.get("/patients:id", async function (req, res, next) {
 });
 router.get("/patients-dr:id", async function (req, res, next) {
   try {
-    res.json(await database.getMultiplePatientsByDoctorID(req.params.id ,req.query.page));
+    res.json(
+      await database.getMultiplePatientsByDoctorID(
+        req.params.id,
+        req.query.page
+      )
+    );
   } catch (err) {
     console.error(`Error while getting data `, err.message);
     next(err);
@@ -40,7 +63,7 @@ router.get("/patients-dr:id", async function (req, res, next) {
 
 router.get("/teeth:id", async function (req, res, next) {
   try {
-    res.json(await database.getTeethByID(req.params.id ,req.query.page));
+    res.json(await database.getTeethByID(req.params.id, req.query.page));
   } catch (err) {
     console.error(`Error while getting data `, err.message);
     next(err);
@@ -49,7 +72,7 @@ router.get("/teeth:id", async function (req, res, next) {
 
 router.get("/photos:id", async function (req, res, next) {
   try {
-    res.json(await database.getPhotosByID(req.params.id ,req.query.page));
+    res.json(await database.getPhotosByID(req.params.id, req.query.page));
   } catch (err) {
     console.error(`Error while getting data `, err.message);
     next(err);
@@ -77,14 +100,14 @@ router.post("/visit", async function (req, res, next) {
 
 router.post("/teeth:id", async function (req, res, next) {
   try {
-    res.json(await database.createNewTeethForPatientByID(req.params.id, req.body));
+    res.json(
+      await database.createNewTeethForPatientByID(req.params.id, req.body)
+    );
   } catch (err) {
     console.error(`Error while creating data`, err.message);
     next(err);
   }
 });
-
-
 
 /* PUT */
 router.put("/patient:id", async function (req, res, next) {
