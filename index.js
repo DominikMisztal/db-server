@@ -8,6 +8,12 @@ const cookieParser = require("cookie-parser");
 app.use(express.json());
 
 const bodyParser = require("body-parser");
+const cors = require("cors");
+const corsConfig = {
+  origin: "http://localhost:3000",
+  optionSuccessStatus: 200,
+  credentials: true,
+};
 
 app.use(express.json({ limit: "50mb" }));
 
@@ -18,7 +24,7 @@ app.use(
 );
 
 app.use(cookieParser());
-
+app.use(cors(corsConfig));
 app.get("/", (req, res) => {
   res.json({ message: "ok" });
 });
