@@ -113,10 +113,9 @@ router.post("/teeth:id", async function (req, res, next) {
   }
 });
 
-
 router.post("/upload_photo:id", async function (req, res, next) {
   const visitId = req.params.id;
-  //get just data64 encoded data
+  //get just base64 encoded data
   const trimmedData = req.body.data.replace(/^data:image\/\w+;base64,/, "");
   const photoData = Buffer.from(trimmedData, "base64");
   const filename = crypto.randomUUID() + ".jpg";
@@ -135,7 +134,6 @@ router.post("/upload_photo:id", async function (req, res, next) {
     }
   });
 });
-
 
 /* PUT */
 router.put("/patient:id", async function (req, res, next) {

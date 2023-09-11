@@ -93,7 +93,7 @@ async function getPhotosByVisitID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
-    FROM photos WHERE ID = ${ID.substring(1)} LIMIT ${offset},${
+    FROM photos WHERE visitID = ${ID.substring(0, 1)} LIMIT ${offset},${
       config.listPerPage
     }`
   );
