@@ -2,6 +2,14 @@ const db = require("./db");
 const helper = require("../helper");
 const config = require("../config");
 
+async function getDoctorByCredentials(email, password) {
+  //passwords should've been stored as hashes, done only for demo
+  const query = `SELECT Name, Surname, Email FROM doctors WHERE email = "${email}" AND password = "${password}"`;
+
+  const data = await db.query(query);
+  return { data };
+}
+
 async function getMultipleDoctors(page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
@@ -83,12 +91,12 @@ async function getTeethByID(ID, page = 1) {
 
 async function getPhotosByVisitID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
-  const query = `SELECT *
-    FROM photos WHERE visitID = ${ID.substring(0, 1)} 
-    LIMIT ${offset},${config.listPerPage}`;
-
-  console.log(query);
-  const rows = await db.query(query);
+  const rows = await db.query(
+    `SELECT *
+    FROM photos WHERE ID = ${ID.substring(1)} LIMIT ${offset},${
+      config.listPerPage
+    }`
+  );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
 
@@ -277,6 +285,7 @@ async function remove(id) {
 }
 
 module.exports = {
+  getDoctorByCredentials,
   getMultipleDoctors,
   getMultiplePatients,
   getMultiplePatientsByID,

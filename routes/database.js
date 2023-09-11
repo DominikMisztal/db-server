@@ -1,8 +1,27 @@
 const express = require("express");
 const router = express.Router();
 const database = require("../services/database");
+
+const { activeSessions } = require("../services/sessions");
+
+//authorize requests
+router.use((req, res, next) => {
+  const { sessionId } = req.cookies;
+  if (!sessionId) {
+    next({ statusCode: 403, message: "user not logged in" });
+    return;
+  }
+
+  if (activeSessions.has(sessionId)) {
+    next();
+  } else {
+    next({ statusCode: 403, message: "session expired" });
+  }
+});
+
 const fs = require("fs");
 const crypto = require("crypto");
+
 /* GET */
 router.get("/doctors", async function (req, res, next) {
   try {
@@ -94,6 +113,7 @@ router.post("/teeth:id", async function (req, res, next) {
   }
 });
 
+
 router.post("/upload_photo:id", async function (req, res, next) {
   const visitId = req.params.id;
   //get just data64 encoded data
@@ -115,6 +135,7 @@ router.post("/upload_photo:id", async function (req, res, next) {
     }
   });
 });
+
 
 /* PUT */
 router.put("/patient:id", async function (req, res, next) {
