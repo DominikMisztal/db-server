@@ -83,6 +83,24 @@ router.get("/photos:id", async function (req, res, next) {
   }
 });
 
+router.get("/operations", async function (req, res, next) {
+  try {
+    res.json(await database.getOperations(req.query.page));
+  } catch (err) {
+    console.error(`Error while getting data `, err.message);
+    next(err);
+  }
+});
+
+router.get("/operations:id", async function (req, res, next) {
+  try {
+    res.json(await database.getOperationsByID(req.params.id, req.query.page));
+  } catch (err) {
+    console.error(`Error while getting data `, err.message);
+    next(err);
+  }
+});
+
 /* POST */
 router.post("/patient", async function (req, res, next) {
   try {

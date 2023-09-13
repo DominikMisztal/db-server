@@ -138,6 +138,45 @@ async function getVisitsByDoctorID(ID, page = 1) {
   };
 }
 
+
+async function getOperations(page = 1) {
+  const offset = helper.getOffset(page, config.listPerPage);
+  const rows = await db.query(
+    `SELECT *
+    FROM operations LIMIT ${offset},${
+      config.listPerPage
+    }`
+  );
+  const data = helper.emptyOrRows(rows);
+  const meta = { page };
+
+  return {
+    data,
+    meta,
+  };
+}
+
+async function getOperationsByID(ID, page = 1) {
+  const offset = helper.getOffset(page, config.listPerPage);
+  const rows = await db.query(
+    `SELECT *
+    FROM operations where ID = ${ID.substring(1)} LIMIT ${offset},${
+      config.listPerPage
+    }`
+  );
+  const data = helper.emptyOrRows(rows);
+  const meta = { page };
+
+  return {
+    data,
+    meta,
+  };
+}
+
+
+
+
+
 async function createPatient(patient) {
   const result = await db.query(
     `INSERT INTO patients 
@@ -178,10 +217,10 @@ async function createVisit(visit) {
     `INSERT INTO visits 
     (patient, doctor, date, duration, teeth) 
     VALUES 
-    ("${visit.patient}", ${visit.doctor}, ${visit.date}, ${visit.duration}, ${visit.teeth}, ${patient.gender}, ${patient.birthday})`
+    ("${visit.patient}", ${visit.doctor}, ${visit.date}, ${visit.duration}, ${visit.teeth})`
   );
 
-  let message = "Error in creating patient";
+  let message = "Error in creating visit";
 
   if (result.affectedRows) {
     message = "patient created successfully";
@@ -203,13 +242,33 @@ async function createNewPhoto(filename, visitId) {
 }
 
 async function createNewTeethForPatientByID(ID, patient) {
+  
+  row = await db.query(`SELECT * from teeth where patient = ${ID.substring(1)} `);
+
   const result = await db.query(
     `INSERT INTO teeth 
-    (patient) 
+    (patient, t1, t2, t3, t4, t5,
+      t6, t7, t8, t9, t10,
+      t11, t12, t13, t14, t15,
+      t16, t17, t18, t19, t20,
+      t21, t22, t23, t24, t25,
+      t26, t27, t28, t29, t30,
+      t31, t32) 
     VALUES 
-    ("${patient.ID}")`
-  );
+    ("${patient.ID}, ${row[0].t1}, ${row[0].t2}, ${row[0].t3},
+    ${row[0].t4}, ${row[0].t5}, ${row[0].t6},
+    ${row[0].t7}, ${row[0].t8}, ${row[0].t9},
+    ${row[0].t10}, ${row[0].t11}, ${row[0].t12},
+    ${row[0].t13}, ${row[0].t14}, ${row[0].t15},
+    ${row[0].t16}, ${row[0].t17}, ${row[0].t18},
+    ${row[0].t19}, ${row[0].t20}, ${row[0].t21},
+    ${row[0].t22}, ${row[0].t23}, ${row[0].t24},
+    ${row[0].t25}, ${row[0].t26}, ${row[0].t27},
+    ${row[0].t28}, ${row[0].t29}, ${row[0].t30},
+    ${row[0].t31}, ${row[0].t32}")`
 
+  );
+  
   row = await db.query(`SELECT * from teeth order by ID desc LIMIT 1`);
 
   teeth_id = row[0].ID;
@@ -294,6 +353,8 @@ module.exports = {
   getPhotosByID: getPhotosByVisitID,
   getVisits,
   getVisitsByDoctorID,
+  getOperations,
+  getOperationsByID,
   createNewTeethForPatientByID,
   createPatient,
   createNewPhoto,
