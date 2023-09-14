@@ -15,11 +15,11 @@ router.post("/login", async (req, res, next) => {
   }
 
   try {
-    const data = await database.getDoctorByCredentials(email, password);
-    if (!data) {
+    const rows = await database.getDoctorByCredentials(email, password);
+    if (!rows) {
       res.status(304).json({ message: "incorrect credentials" });
     } else {
-      const sessionId = newSession(data);
+      const sessionId = newSession(rows.data[0]);
       res.json({ session: sessionId });
     }
   } catch (err) {
@@ -35,14 +35,12 @@ router.post("/me", async (req, res, next) => {
     return;
   }
 
-  const rows = activeSessions.get(sessionId);
-  if (!rows) {
+  const doctor = activeSessions.get(sessionId);
+  if (!doctor) {
     res.status(400).json({
       message: "Session expired. Please log in again.",
     });
   } else {
-    const doctor = rows.data[0];
-
     res.json({
       email: doctor.Email,
       name: doctor.Name,
