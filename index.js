@@ -5,7 +5,6 @@ const databaseRouter = require("./routes/database");
 
 const authRouter = require("./routes/auth");
 const cookieParser = require("cookie-parser");
-app.use(express.json());
 
 const bodyParser = require("body-parser");
 const cors = require("cors");

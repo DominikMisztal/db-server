@@ -9,7 +9,15 @@ function emptyOrRows(rows) {
   return rows;
 }
 
+function lowercaseObjectKeys(obj) {
+  return Object.keys(obj).reduce((accumulator, key) => {
+    accumulator[key.toLowerCase()] = obj[key];
+    return accumulator;
+  }, {});
+}
+
 module.exports = {
   getOffset,
   emptyOrRows,
+  lowercaseObjectKeys,
 };

@@ -4,7 +4,7 @@ const config = require("../config");
 
 async function getDoctorByCredentials(email, password) {
   //passwords should've been stored as hashes, done only for demo
-  const query = `SELECT Name, Surname, Email FROM doctors WHERE email = "${email}" AND password = "${password}"`;
+  const query = `SELECT ID, Name, Surname, Email FROM doctors WHERE email = "${email}" AND password = "${password}"`;
 
   const data = await db.query(query);
   return { data };
@@ -16,7 +16,6 @@ async function getMultipleDoctors(page = 1) {
     `SELECT * 
     FROM doctors LIMIT ${offset},${config.listPerPage}`
   );
-  console.log(rows[0].ID);
   const data = helper.emptyOrRows(rows);
   const meta = { page };
 
@@ -62,23 +61,21 @@ async function getMultiplePatientsByDoctorID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
-    FROM patients WHERE doctor = ${ID.substring(1)} LIMIT ${offset},${
-      config.listPerPage
-    }`
+    FROM patients WHERE doctor = ${ID} LIMIT ${offset},${config.listPerPage}`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
 
   return {
-    data,
+    data: data.map((object) => helper.lowercaseObjectKeys(object)),
     meta,
   };
 }
 
-async function getTeethByID(ID, page = 1) {
+async function getTeethByPatientID(ID, page = 1) {
   const rows = await db.query(
     `SELECT *
-    FROM teeth WHERE ID = ${ID.substring(1)}`
+    FROM teeth WHERE patient = ${ID} ORDER by ID desc`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
@@ -124,28 +121,23 @@ async function getVisits(ID, page = 1) {
 async function getVisitsByDoctorID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
-    `SELECT *
-    FROM visits WHERE doctor = ${ID.substring(1)} LIMIT ${offset},${
-      config.listPerPage
-    }`
+    `SELECT v.id, v.date, v.duration, v.teeth , p.Name, p.Surname
+    FROM visits AS v INNER JOIN patients AS p ON p.id = v.patient WHERE v.doctor = ${ID} LIMIT ${offset},${config.listPerPage}`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
 
   return {
-    data,
+    data: data.map((item) => helper.lowercaseObjectKeys(item)),
     meta,
   };
 }
-
 
 async function getOperations(page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
-    FROM operations LIMIT ${offset},${
-      config.listPerPage
-    }`
+    FROM operations LIMIT ${offset},${config.listPerPage}`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
@@ -173,16 +165,12 @@ async function getOperationsByID(ID, page = 1) {
   };
 }
 
-
-
-
-
-async function createPatient(patient) {
+async function createPatient(patient, doctorId) {
   const result = await db.query(
     `INSERT INTO patients 
-    (Name, Surname, Age, Pesel, Birthday, Gender) 
+    (Name, Surname, Age, Pesel, Birthday, Gender, Doctor) 
     VALUES 
-    ("${patient.name}", ${patient.surname}, ${patient.age}, ${patient.pesel}, ${patient.birthday}, ${patient.gender}, ${patient.birthday})`
+    ("${patient.name}", "${patient.surname}", ${patient.age}, "${patient.pesel}", "${patient.birthday}", "${patient.gender}", ${doctorId})`
   );
 
   let message = "Error in creating patient";
@@ -194,9 +182,9 @@ async function createPatient(patient) {
 
   let patient_id = row[0].ID;
   await db.query(
-    `INSERT INTO teeth 
-    (patient) 
-    VALUES 
+    `INSERT INTO teeth
+    (patient)
+    VALUES
     ("${patient_id}")`
   );
 
@@ -205,7 +193,7 @@ async function createPatient(patient) {
   teeth_id = row[0].ID;
   await db.query(
     `UPDATE patients
-    SET teeth = ${teeth_id}
+    SET TeethLatest = ${teeth_id}
     WHERE ID = ${patient_id}`
   );
 
@@ -213,9 +201,7 @@ async function createPatient(patient) {
 }
 
 async function createVisit(visit) {
-
   row = await db.query(`SELECT * from teeth where patient = ${visit.patient}`);
-
 
   const result = await db.query(
     `INSERT INTO visits 
@@ -227,7 +213,7 @@ async function createVisit(visit) {
   let message = "Error in creating visit";
 
   if (result.affectedRows) {
-    message = "patient created successfully";
+    message = "Visit created successfully";
   }
 
   return { message };
@@ -246,8 +232,9 @@ async function createNewPhoto(filename, visitId) {
 }
 
 async function createNewTeethForPatientByID(ID, patient) {
-  
-  row = await db.query(`SELECT * from teeth where patient = ${ID.substring(1)} `);
+  row = await db.query(
+    `SELECT * from teeth where patient = ${ID.substring(1)} `
+  );
 
   const result = await db.query(
     `INSERT INTO teeth 
@@ -270,9 +257,8 @@ async function createNewTeethForPatientByID(ID, patient) {
     ${row[0].t25}, ${row[0].t26}, ${row[0].t27},
     ${row[0].t28}, ${row[0].t29}, ${row[0].t30},
     ${row[0].t31}, ${row[0].t32}")`
-
   );
-  
+
   row = await db.query(`SELECT * from teeth order by ID desc LIMIT 1`);
 
   teeth_id = row[0].ID;
@@ -353,7 +339,7 @@ module.exports = {
   getMultiplePatients,
   getMultiplePatientsByID,
   getMultiplePatientsByDoctorID,
-  getTeethByID,
+  getTeethByPatientID,
   getPhotosByID: getPhotosByVisitID,
   getVisits,
   getVisitsByDoctorID,
