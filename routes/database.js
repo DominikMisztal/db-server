@@ -3,7 +3,7 @@ const router = express.Router();
 const database = require("../services/database");
 
 const { activeSessions } = require("../services/sessions");
-
+const helper = require("../helper");
 //authorize requests
 router.use((req, res, next) => {
   const { sessionId } = req.cookies;
@@ -96,7 +96,16 @@ router.get("/photos:id", async function (req, res, next) {
 
 router.get("/operations", async function (req, res, next) {
   try {
-    res.json(await database.getOperations(req.query.page));
+    const { data } = await database.getOperations(req.query.page);
+    console.log(data);
+    const translated = data
+      .map((item) => helper.lowercaseObjectKeys(item))
+      .map((item) =>
+        item.type === "Rozpoznanie"
+          ? { ...item, type: "DIAGNOSIS" }
+          : { ...item, type: "TREATMENT" }
+      );
+    res.json(translated);
   } catch (err) {
     console.error(`Error while getting data `, err.message);
     next(err);
