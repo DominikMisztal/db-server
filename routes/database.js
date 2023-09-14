@@ -66,8 +66,6 @@ router.get("/patients:id", async function (req, res, next) {
 router.get("/my_patients", async function (req, res, next) {
   const { sessionId } = req.cookies;
   const doctorId = activeSessions.get(sessionId).ID;
-  const page = req.params.page;
-  console.log(req.query.page);
   try {
     res.json(
       await database.getMultiplePatientsByDoctorID(doctorId, req.query.page)
@@ -132,6 +130,7 @@ router.post("/visit", async function (req, res, next) {
   const { data: teeth } = await database.getTeethByPatientID(req.body.patient);
   const data = { ...req.body, doctor, teeth: teeth[0].ID };
 
+  console.log(data);
   try {
     res.json(await database.createVisit(data));
   } catch (err) {

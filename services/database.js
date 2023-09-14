@@ -127,7 +127,6 @@ async function getVisitsByDoctorID(ID, page = 1) {
   const data = helper.emptyOrRows(rows);
   const meta = { page };
 
-  console.log(data);
   return {
     data: data.map((item) => helper.lowercaseObjectKeys(item)),
     meta,
