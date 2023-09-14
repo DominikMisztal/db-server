@@ -78,7 +78,25 @@ router.get("/my_patients", async function (req, res, next) {
 
 router.get("/teeth:id", async function (req, res, next) {
   try {
-    res.json(await database.getTeethByPatientID(req.params.id, req.query.page));
+    const { data } = await database.getTeethByID(req.params.id, req.query.page);
+    const toSend = {
+      id: data[0].ID,
+      patientId: data[0].patient,
+      teeth: [],
+    };
+
+    for (const tooth in data[0]) {
+      if (tooth === "ID" || tooth === "patient") {
+        continue;
+      }
+
+      toSend.teeth.push({
+        index: tooth.substring(1),
+        operations: data[tooth],
+      });
+    }
+
+    res.json(toSend);
   } catch (err) {
     console.error(`Error while getting data `, err.message);
     next(err);

@@ -72,6 +72,16 @@ async function getMultiplePatientsByDoctorID(ID, page = 1) {
   };
 }
 
+async function getTeethByID(ID, page = 1) {
+  const row = await db.query(
+    `SELECT *
+    FROM teeth WHERE id = ${ID}`
+  );
+  const data = helper.emptyOrRows(row);
+
+  return { data };
+}
+
 async function getTeethByPatientID(ID, page = 1) {
   const rows = await db.query(
     `SELECT *
@@ -339,6 +349,7 @@ module.exports = {
   getMultiplePatients,
   getMultiplePatientsByID,
   getMultiplePatientsByDoctorID,
+  getTeethByID,
   getTeethByPatientID,
   getPhotosByID: getPhotosByVisitID,
   getVisits,
