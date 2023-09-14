@@ -4,7 +4,7 @@ const config = require("../config");
 
 async function getDoctorByCredentials(email, password) {
   //passwords should've been stored as hashes, done only for demo
-  const query = `SELECT Name, Surname, Email FROM doctors WHERE email = "${email}" AND password = "${password}"`;
+  const query = `SELECT ID, Name, Surname, Email FROM doctors WHERE email = "${email}" AND password = "${password}"`;
 
   const data = await db.query(query);
   return { data };
@@ -16,7 +16,6 @@ async function getMultipleDoctors(page = 1) {
     `SELECT * 
     FROM doctors LIMIT ${offset},${config.listPerPage}`
   );
-  console.log(rows[0].ID);
   const data = helper.emptyOrRows(rows);
   const meta = { page };
 
@@ -62,15 +61,13 @@ async function getMultiplePatientsByDoctorID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
-    FROM patients WHERE doctor = ${ID.substring(1)} LIMIT ${offset},${
-      config.listPerPage
-    }`
+    FROM patients WHERE doctor = ${ID} LIMIT ${offset},${config.listPerPage}`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
 
   return {
-    data,
+    data: data.map((object) => helper.lowercaseObjectKeys(object)),
     meta,
   };
 }
@@ -138,14 +135,11 @@ async function getVisitsByDoctorID(ID, page = 1) {
   };
 }
 
-
 async function getOperations(page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
-    FROM operations LIMIT ${offset},${
-      config.listPerPage
-    }`
+    FROM operations LIMIT ${offset},${config.listPerPage}`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
@@ -173,16 +167,12 @@ async function getOperationsByID(ID, page = 1) {
   };
 }
 
-
-
-
-
-async function createPatient(patient) {
+async function createPatient(patient, doctorId) {
   const result = await db.query(
     `INSERT INTO patients 
-    (Name, Surname, Age, Pesel, Birthday, Gender) 
+    (Name, Surname, Age, Pesel, Birthday, Gender, Doctor) 
     VALUES 
-    ("${patient.name}", ${patient.surname}, ${patient.age}, ${patient.pesel}, ${patient.birthday}, ${patient.gender}, ${patient.birthday})`
+    ("${patient.name}", "${patient.surname}", ${patient.age}, "${patient.pesel}", "${patient.birthday}", "${patient.gender}", ${doctorId})`
   );
 
   let message = "Error in creating patient";
@@ -190,24 +180,24 @@ async function createPatient(patient) {
   if (result.affectedRows) {
     message = "patient created successfully";
   }
-  let row = await db.query(`SELECT * from patients order by ID desc LIMIT 1`);
+  // let row = await db.query(`SELECT * from patients order by ID desc LIMIT 1`);
 
-  let patient_id = row[0].ID;
-  await db.query(
-    `INSERT INTO teeth 
-    (patient) 
-    VALUES 
-    ("${patient_id}")`
-  );
+  // let patient_id = row[0].ID;
+  // await db.query(
+  //   `INSERT INTO teeth
+  //   (patient)
+  //   VALUES
+  //   ("${patient_id}")`
+  // );
 
-  row = await db.query(`SELECT * from teeth order by ID desc LIMIT 1`);
+  // row = await db.query(`SELECT * from teeth order by ID desc LIMIT 1`);
 
-  teeth_id = row[0].ID;
-  await db.query(
-    `UPDATE patients
-    SET teeth = ${teeth_id}
-    WHERE ID = ${patient_id}`
-  );
+  // teeth_id = row[0].ID;
+  // await db.query(
+  //   `UPDATE patients
+  //   SET teeth = ${teeth_id}
+  //   WHERE ID = ${patient_id}`
+  // );
 
   return { message };
 }
@@ -242,8 +232,9 @@ async function createNewPhoto(filename, visitId) {
 }
 
 async function createNewTeethForPatientByID(ID, patient) {
-  
-  row = await db.query(`SELECT * from teeth where patient = ${ID.substring(1)} `);
+  row = await db.query(
+    `SELECT * from teeth where patient = ${ID.substring(1)} `
+  );
 
   const result = await db.query(
     `INSERT INTO teeth 
@@ -266,9 +257,8 @@ async function createNewTeethForPatientByID(ID, patient) {
     ${row[0].t25}, ${row[0].t26}, ${row[0].t27},
     ${row[0].t28}, ${row[0].t29}, ${row[0].t30},
     ${row[0].t31}, ${row[0].t32}")`
-
   );
-  
+
   row = await db.query(`SELECT * from teeth order by ID desc LIMIT 1`);
 
   teeth_id = row[0].ID;

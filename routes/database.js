@@ -51,13 +51,13 @@ router.get("/patients:id", async function (req, res, next) {
     next(err);
   }
 });
-router.get("/patients-dr:id", async function (req, res, next) {
+
+router.get("/my_patients", async function (req, res, next) {
+  const { sessionId } = req.cookies;
+  const doctorId = activeSessions.get(sessionId).ID;
   try {
     res.json(
-      await database.getMultiplePatientsByDoctorID(
-        req.params.id,
-        req.query.page
-      )
+      await database.getMultiplePatientsByDoctorID(doctorId, req.query.page)
     );
   } catch (err) {
     console.error(`Error while getting data `, err.message);
@@ -103,8 +103,12 @@ router.get("/operations:id", async function (req, res, next) {
 
 /* POST */
 router.post("/patient", async function (req, res, next) {
+  const sessionId = req.cookies.sessionId;
+
+  const id = activeSessions.get(sessionId).ID;
+  console.log(id);
   try {
-    res.json(await database.createPatient(req.body));
+    res.json(await database.createPatient(req.body, id));
   } catch (err) {
     console.error(`Error while creating data`, err.message);
     next(err);
