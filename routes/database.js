@@ -32,6 +32,17 @@ router.get("/doctors", async function (req, res, next) {
   }
 });
 
+router.get("/my_visits", async function (req, res, next) {
+  const { sessionId } = req.cookies;
+  const doctorId = activeSessions.get(sessionId).ID;
+  try {
+    res.json(await database.getVisitsByDoctorID(doctorId, req.query.page));
+  } catch (err) {
+    console.error(`Error while getting data `, err.message);
+    next(err);
+  }
+});
+
 router.get("/patients", async function (req, res, next) {
   try {
     res.json(await database.getMultiplePatients(req.query.page));

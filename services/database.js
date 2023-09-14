@@ -121,16 +121,15 @@ async function getVisits(ID, page = 1) {
 async function getVisitsByDoctorID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
-    `SELECT *
-    FROM visits WHERE doctor = ${ID.substring(1)} LIMIT ${offset},${
-      config.listPerPage
-    }`
+    `SELECT v.id, v.date, v.duration, v.teeth , p.Name, p.Surname
+    FROM visits AS v INNER JOIN patients AS p ON p.id = v.patient WHERE v.doctor = ${ID} LIMIT ${offset},${config.listPerPage}`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
 
+  console.log(data);
   return {
-    data,
+    data: data.map((item) => helper.lowercaseObjectKeys(item)),
     meta,
   };
 }
