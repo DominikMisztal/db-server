@@ -201,12 +201,13 @@ async function createPatient(patient, doctorId) {
 }
 
 async function createVisit(visit) {
-  console.log(visit);
+  row = await db.query(`SELECT * from teeth where patient = ${visit.patient}`);
+
   const result = await db.query(
     `INSERT INTO visits 
     (patient, doctor, date, duration, teeth) 
     VALUES 
-    ("${visit.patient}", ${visit.doctor}, "${visit.date}", ${visit.duration}, ${visit.teeth})`
+    ("${visit.patient}", ${visit.doctor}, ${visit.date}, ${visit.duration}, ${row[0].ID})`
   );
 
   let message = "Error in creating visit";
