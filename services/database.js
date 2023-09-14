@@ -180,24 +180,24 @@ async function createPatient(patient, doctorId) {
   if (result.affectedRows) {
     message = "patient created successfully";
   }
-  // let row = await db.query(`SELECT * from patients order by ID desc LIMIT 1`);
+  let row = await db.query(`SELECT * from patients order by ID desc LIMIT 1`);
 
-  // let patient_id = row[0].ID;
-  // await db.query(
-  //   `INSERT INTO teeth
-  //   (patient)
-  //   VALUES
-  //   ("${patient_id}")`
-  // );
+  let patient_id = row[0].ID;
+  await db.query(
+    `INSERT INTO teeth
+    (patient)
+    VALUES
+    ("${patient_id}")`
+  );
 
-  // row = await db.query(`SELECT * from teeth order by ID desc LIMIT 1`);
+  row = await db.query(`SELECT * from teeth order by ID desc LIMIT 1`);
 
-  // teeth_id = row[0].ID;
-  // await db.query(
-  //   `UPDATE patients
-  //   SET teeth = ${teeth_id}
-  //   WHERE ID = ${patient_id}`
-  // );
+  teeth_id = row[0].ID;
+  await db.query(
+    `UPDATE patients
+    SET TeethLatest = ${teeth_id}
+    WHERE ID = ${patient_id}`
+  );
 
   return { message };
 }
