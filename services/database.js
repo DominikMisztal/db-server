@@ -133,6 +133,23 @@ async function getVisitsByDoctorID(ID, page = 1) {
   };
 }
 
+async function getVisitsByDoctorIDAndDate(ID, request, page = 1) {
+  const offset = helper.getOffset(page, config.listPerPage);
+  const rows = await db.query(
+    `SELECT v.id, v.date, v.duration, v.teeth , p.Name, p.Surname
+    FROM visits AS v INNER JOIN patients AS p ON 
+    p.id = v.patient WHERE v.doctor = ${ID} AND 
+    DAY(v.date) = ${request.day} AND MONTH(v.date) = ${request.month} AND YEAR(v.date) = ${request.year}`
+  );
+  const data = helper.emptyOrRows(rows);
+  const meta = { page };
+
+  return {
+    data: data.map((item) => helper.lowercaseObjectKeys(item)),
+    meta,
+  };
+}
+
 async function getOperations(page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
@@ -343,6 +360,7 @@ module.exports = {
   getPhotosByID: getPhotosByVisitID,
   getVisits,
   getVisitsByDoctorID,
+  getVisitsByDoctorIDAndDate,
   getOperations,
   getOperationsByID,
   createNewTeethForPatientByID,
