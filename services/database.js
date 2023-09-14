@@ -72,10 +72,10 @@ async function getMultiplePatientsByDoctorID(ID, page = 1) {
   };
 }
 
-async function getTeethByID(ID, page = 1) {
+async function getTeethByPatientID(ID, page = 1) {
   const rows = await db.query(
     `SELECT *
-    FROM teeth WHERE ID = ${ID.substring(1)}`
+    FROM teeth WHERE patient = ${ID} ORDER by ID desc`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
@@ -203,17 +203,18 @@ async function createPatient(patient, doctorId) {
 }
 
 async function createVisit(visit) {
+  console.log(visit);
   const result = await db.query(
     `INSERT INTO visits 
     (patient, doctor, date, duration, teeth) 
     VALUES 
-    ("${visit.patient}", ${visit.doctor}, ${visit.date}, ${visit.duration}, ${visit.teeth})`
+    ("${visit.patient}", ${visit.doctor}, "${visit.date}", ${visit.duration}, ${visit.teeth})`
   );
 
   let message = "Error in creating visit";
 
   if (result.affectedRows) {
-    message = "patient created successfully";
+    message = "Visit created successfully";
   }
 
   return { message };
@@ -339,7 +340,7 @@ module.exports = {
   getMultiplePatients,
   getMultiplePatientsByID,
   getMultiplePatientsByDoctorID,
-  getTeethByID,
+  getTeethByPatientID,
   getPhotosByID: getPhotosByVisitID,
   getVisits,
   getVisitsByDoctorID,
