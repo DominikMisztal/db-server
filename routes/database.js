@@ -85,6 +85,8 @@ router.get("/teeth:id", async function (req, res, next) {
       teeth: [],
     };
 
+    console.log(data[0]);
+
     for (const tooth in data[0]) {
       if (tooth === "ID" || tooth === "patient") {
         continue;
@@ -92,10 +94,13 @@ router.get("/teeth:id", async function (req, res, next) {
 
       toSend.teeth.push({
         index: tooth.substring(1),
-        operations: data[tooth],
+        operations: data[0][tooth]
+          ? data[0][tooth].split(",").map((item) => +item)
+          : [],
       });
     }
 
+    console.log(toSend);
     res.json(toSend);
   } catch (err) {
     console.error(`Error while getting data `, err.message);
@@ -154,8 +159,10 @@ router.post("/patient", async function (req, res, next) {
 
 router.post("/visit", async function (req, res, next) {
   const doctor = activeSessions.get(req.cookies.sessionId).ID;
-  const { data: teeth } = await database.getTeethByPatientID(req.body.patient);
-  const data = { ...req.body, doctor, teeth: teeth[0].ID };
+  const { data: patients } = await database.getMultiplePatientsByID(
+    req.body.patient
+  );
+  const data = { ...req.body, doctor, teeth: patients[0].TeethLatest };
 
   console.log(data);
   try {
@@ -168,9 +175,13 @@ router.post("/visit", async function (req, res, next) {
 
 router.post("/teeth:id", async function (req, res, next) {
   try {
-    res.json(
-      await database.createNewTeethForPatientByID(req.params.id, req.body)
-    );
+    const transformed = { patient: req.body.patientId };
+    for (const { index, operations } of req.body.teeth) {
+      transformed[`t${index}`] = operations.toString();
+    }
+
+    console.log(transformed);
+    res.json(await database.createNewTeethForPatientByID(transformed));
   } catch (err) {
     console.error(`Error while creating data`, err.message);
     next(err);
