@@ -130,7 +130,9 @@ async function getVisitsByDoctorID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT v.id, v.date, v.duration, v.teeth, v.patient ,p.Name, p.Surname
-    FROM visits AS v INNER JOIN patients AS p ON p.id = v.patient WHERE v.doctor = ${ID} LIMIT ${offset},${config.listPerPage}`
+    FROM visits AS v INNER JOIN patients AS p ON p.id = v.patient 
+    WHERE v.doctor = ${ID} AND v.date >= CURRENT_DATE()
+    order by v.date ASC LIMIT ${offset},${config.listPerPage}`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
