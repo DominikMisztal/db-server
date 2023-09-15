@@ -44,9 +44,7 @@ async function getMultiplePatientsByID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
-    FROM patients WHERE ID = ${ID.substring(1)} LIMIT ${offset},${
-      config.listPerPage
-    }`
+    FROM patients WHERE ID = ${ID} LIMIT ${offset},${config.listPerPage}`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
@@ -70,6 +68,16 @@ async function getMultiplePatientsByDoctorID(ID, page = 1) {
     data: data.map((object) => helper.lowercaseObjectKeys(object)),
     meta,
   };
+}
+
+async function getTeethByID(ID, page = 1) {
+  const row = await db.query(
+    `SELECT *
+    FROM teeth WHERE id = ${ID}`
+  );
+  const data = helper.emptyOrRows(row);
+
+  return { data };
 }
 
 async function getTeethByPatientID(ID, page = 1) {
@@ -121,7 +129,7 @@ async function getVisits(ID, page = 1) {
 async function getVisitsByDoctorID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
-    `SELECT v.id, v.date, v.duration, v.teeth , p.Name, p.Surname
+    `SELECT v.id, v.date, v.duration, v.teeth, v.patient ,p.Name, p.Surname
     FROM visits AS v INNER JOIN patients AS p ON p.id = v.patient WHERE v.doctor = ${ID} LIMIT ${offset},${config.listPerPage}`
   );
   const data = helper.emptyOrRows(rows);
@@ -218,13 +226,11 @@ async function createPatient(patient, doctorId) {
 }
 
 async function createVisit(visit) {
-  row = await db.query(`SELECT * from teeth where patient = ${visit.patient}`);
-
   const result = await db.query(
     `INSERT INTO visits 
     (patient, doctor, date, duration, teeth) 
     VALUES 
-    ("${visit.patient}", ${visit.doctor}, ${visit.date}, ${visit.duration}, ${row[0].ID})`
+    ("${visit.patient}", ${visit.doctor}, "${visit.date}", ${visit.duration}, ${visit.teeth})`
   );
 
   let message = "Error in creating visit";
@@ -248,11 +254,7 @@ async function createNewPhoto(filename, visitId) {
   }
 }
 
-async function createNewTeethForPatientByID(ID, patient) {
-  row = await db.query(
-    `SELECT * from teeth where patient = ${ID.substring(1)} `
-  );
-
+async function createNewTeethForPatientByID(data) {
   const result = await db.query(
     `INSERT INTO teeth 
     (patient, t1, t2, t3, t4, t5,
@@ -263,26 +265,26 @@ async function createNewTeethForPatientByID(ID, patient) {
       t26, t27, t28, t29, t30,
       t31, t32) 
     VALUES 
-    ("${patient.ID}, ${row[0].t1}, ${row[0].t2}, ${row[0].t3},
-    ${row[0].t4}, ${row[0].t5}, ${row[0].t6},
-    ${row[0].t7}, ${row[0].t8}, ${row[0].t9},
-    ${row[0].t10}, ${row[0].t11}, ${row[0].t12},
-    ${row[0].t13}, ${row[0].t14}, ${row[0].t15},
-    ${row[0].t16}, ${row[0].t17}, ${row[0].t18},
-    ${row[0].t19}, ${row[0].t20}, ${row[0].t21},
-    ${row[0].t22}, ${row[0].t23}, ${row[0].t24},
-    ${row[0].t25}, ${row[0].t26}, ${row[0].t27},
-    ${row[0].t28}, ${row[0].t29}, ${row[0].t30},
-    ${row[0].t31}, ${row[0].t32}")`
+    (${data.patient}, "${data.t1}", "${data.t2}", "${data.t3}",
+    "${data.t4}", "${data.t5}", "${data.t6}",
+    "${data.t7}", "${data.t8}", "${data.t9}",
+    "${data.t10}", "${data.t11}", "${data.t12}",
+    "${data.t13}", "${data.t14}", "${data.t15}",
+    "${data.t16}", "${data.t17}", "${data.t18}",
+    "${data.t19}", "${data.t20}", "${data.t21}",
+    "${data.t22}", "${data.t23}", "${data.t24}",
+    "${data.t25}", "${data.t26}", "${data.t27}",
+    "${data.t28}", "${data.t29}", "${data.t30}",
+    "${data.t31}", "${data.t32}")`
   );
 
-  row = await db.query(`SELECT * from teeth order by ID desc LIMIT 1`);
+  const row = await db.query(`SELECT * from teeth order by ID desc LIMIT 1`);
 
-  teeth_id = row[0].ID;
+  const teeth_id = row[0].ID;
   await db.query(
     `UPDATE patients
-    SET teeth = ${teeth_id}
-    WHERE ID = ${patient.id}`
+    SET teethLatest = ${teeth_id}
+    WHERE ID = ${data.patient}`
   );
 
   let message = "Error in creating patient";
@@ -356,6 +358,7 @@ module.exports = {
   getMultiplePatients,
   getMultiplePatientsByID,
   getMultiplePatientsByDoctorID,
+  getTeethByID,
   getTeethByPatientID,
   getPhotosByID: getPhotosByVisitID,
   getVisits,

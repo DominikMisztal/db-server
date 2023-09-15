@@ -3,7 +3,7 @@ const router = express.Router();
 const database = require("../services/database");
 
 const { activeSessions } = require("../services/sessions");
-
+const helper = require("../helper");
 //authorize requests
 router.use((req, res, next) => {
   const { sessionId } = req.cookies;
@@ -89,7 +89,30 @@ router.get("/my_patients", async function (req, res, next) {
 
 router.get("/teeth:id", async function (req, res, next) {
   try {
-    res.json(await database.getTeethByPatientID(req.params.id, req.query.page));
+    const { data } = await database.getTeethByID(req.params.id, req.query.page);
+    const toSend = {
+      id: data[0].ID,
+      patientId: data[0].patient,
+      teeth: [],
+    };
+
+    console.log(data[0]);
+
+    for (const tooth in data[0]) {
+      if (tooth === "ID" || tooth === "patient") {
+        continue;
+      }
+
+      toSend.teeth.push({
+        index: tooth.substring(1),
+        operations: data[0][tooth]
+          ? data[0][tooth].split(",").map((item) => +item)
+          : [],
+      });
+    }
+
+    console.log(toSend);
+    res.json(toSend);
   } catch (err) {
     console.error(`Error while getting data `, err.message);
     next(err);
@@ -107,7 +130,16 @@ router.get("/photos:id", async function (req, res, next) {
 
 router.get("/operations", async function (req, res, next) {
   try {
-    res.json(await database.getOperations(req.query.page));
+    const { data } = await database.getOperations(req.query.page);
+    console.log(data);
+    const translated = data
+      .map((item) => helper.lowercaseObjectKeys(item))
+      .map((item) =>
+        item.type === "Rozpoznanie"
+          ? { ...item, type: "DIAGNOSIS" }
+          : { ...item, type: "TREATMENT" }
+      );
+    res.json(translated);
   } catch (err) {
     console.error(`Error while getting data `, err.message);
     next(err);
@@ -138,8 +170,10 @@ router.post("/patient", async function (req, res, next) {
 
 router.post("/visit", async function (req, res, next) {
   const doctor = activeSessions.get(req.cookies.sessionId).ID;
-  const { data: teeth } = await database.getTeethByPatientID(req.body.patient);
-  const data = { ...req.body, doctor, teeth: teeth[0].ID };
+  const { data: patients } = await database.getMultiplePatientsByID(
+    req.body.patient
+  );
+  const data = { ...req.body, doctor, teeth: patients[0].TeethLatest };
 
   console.log(data);
   try {
@@ -152,9 +186,13 @@ router.post("/visit", async function (req, res, next) {
 
 router.post("/teeth:id", async function (req, res, next) {
   try {
-    res.json(
-      await database.createNewTeethForPatientByID(req.params.id, req.body)
-    );
+    const transformed = { patient: req.body.patientId };
+    for (const { index, operations } of req.body.teeth) {
+      transformed[`t${index}`] = operations.toString();
+    }
+
+    console.log(transformed);
+    res.json(await database.createNewTeethForPatientByID(transformed));
   } catch (err) {
     console.error(`Error while creating data`, err.message);
     next(err);
