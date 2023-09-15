@@ -59,7 +59,7 @@ async function getMultiplePatientsByDoctorID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
-    FROM patients WHERE doctor = ${ID} LIMIT ${offset},${config.listPerPage}`
+    FROM patients WHERE doctor = ${ID}`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
@@ -98,9 +98,7 @@ async function getPhotosByVisitID(ID, page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
-    FROM photos WHERE visitID = ${ID.substring(0, 1)} LIMIT ${offset},${
-      config.listPerPage
-    }`
+    FROM photos WHERE visitID = ${ID.substring(0, 1)}`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
@@ -132,7 +130,7 @@ async function getVisitsByDoctorID(ID, page = 1) {
     `SELECT v.id, v.date, v.duration, v.teeth, v.patient ,p.Name, p.Surname
     FROM visits AS v INNER JOIN patients AS p ON p.id = v.patient 
     WHERE v.doctor = ${ID} AND v.date >= CURRENT_DATE()
-    order by v.date ASC LIMIT ${offset},${config.listPerPage}`
+    order by v.date ASC`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
@@ -164,7 +162,7 @@ async function getOperations(page = 1) {
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(
     `SELECT *
-    FROM operations LIMIT ${offset},${config.listPerPage}`
+    FROM operations`
   );
   const data = helper.emptyOrRows(rows);
   const meta = { page };
